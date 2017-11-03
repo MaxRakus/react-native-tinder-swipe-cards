@@ -287,7 +287,6 @@ export default class SwipeCards extends Component {
 
     // Checks to see if last card.
     // If props.loop=true, will start again from the first card.
-     // console.warn('_goToNextCard', this.state.cards, currentIndex[this.guid]);
     if (currentIndex[this.guid] === this.state.cards.length && this.props.loop) {
       this.props.onLoop();
       currentIndex[this.guid] = 0;
@@ -300,7 +299,6 @@ export default class SwipeCards extends Component {
       card: tempCards[0],
       cards: this.state.cards,
     });
-    // console.warn('_goToNextCard after state', this.state.cards, currentIndex[this.guid]);
   }
 
   _goToPrevCard() {
@@ -332,7 +330,6 @@ export default class SwipeCards extends Component {
 
   // componentWillReceiveProps(nextProps) {
   //   if (nextProps.cards !== this.props.cards) {
-  //     console.warn('componentWillReceiveProps');
   //     if (this.cardAnimation) {
   //       this.cardAnimation.stop();
   //       this.cardAnimation = null;
@@ -393,7 +390,6 @@ export default class SwipeCards extends Component {
     // let cards = this.state.cards.slice(currentIndex[this.guid], currentIndex[this.guid] + this.props.stackDepth).reverse();
     
     let cards = this.state.cards.slice(0, this.props.stackDepth).reverse();
-    console.log('renderStack', this.state.card);
     return cards.map((card, i) => {
 
       let offsetX = this.props.stackOffsetX * cards.length - i * this.props.stackOffsetX;
