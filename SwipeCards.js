@@ -127,7 +127,7 @@ export default class SwipeCards extends Component {
     nopeText: "Nope!",
     maybeText: "Maybe!",
     yupText: "Yup!",
-    onClickHandler: () => { alert('tap') },
+    onClickHandler: () => {},
     onDragStart: () => {},
     onDragRelease: () => {},
     cardRemoved: (ix) => null,
@@ -143,7 +143,6 @@ export default class SwipeCards extends Component {
     //Use a persistent variable to track currentIndex instead of a local one.
     this.guid = this.props.guid || guid++;
     if (!currentIndex[this.guid]) currentIndex[this.guid] = 0;
-
     this.state = {
       pan: new Animated.ValueXY(0),
       enter: new Animated.Value(0.5),
@@ -288,14 +287,20 @@ export default class SwipeCards extends Component {
 
     // Checks to see if last card.
     // If props.loop=true, will start again from the first card.
-    if (currentIndex[this.guid] > this.state.cards.length - 1 && this.props.loop) {
+     // console.warn('_goToNextCard', this.state.cards, currentIndex[this.guid]);
+    if (currentIndex[this.guid] === this.state.cards.length && this.props.loop) {
       this.props.onLoop();
       currentIndex[this.guid] = 0;
     }
-
+   
+    const tempCards = this.state.cards;
+    this.state.cards.push(this.state.cards[0]);
+    this.state.cards.shift();
     this.setState({
-      card: this.state.cards[currentIndex[this.guid]]
+      card: tempCards[0],
+      cards: this.state.cards,
     });
+    // console.warn('_goToNextCard after state', this.state.cards, currentIndex[this.guid]);
   }
 
   _goToPrevCard() {
@@ -325,21 +330,21 @@ export default class SwipeCards extends Component {
     ).start();
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.cards !== this.props.cards) {
+  // componentWillReceiveProps(nextProps) {
+  //   if (nextProps.cards !== this.props.cards) {
+  //     console.warn('componentWillReceiveProps');
+  //     if (this.cardAnimation) {
+  //       this.cardAnimation.stop();
+  //       this.cardAnimation = null;
+  //     }
 
-      if (this.cardAnimation) {
-        this.cardAnimation.stop();
-        this.cardAnimation = null;
-      }
-
-      currentIndex[this.guid] = 0;
-      this.setState({
-        cards: [].concat(nextProps.cards),
-        card: nextProps.cards[0]
-      });
-    }
-  }
+  //     currentIndex[this.guid] = 0;
+  //     this.setState({
+  //       cards: [].concat(nextProps.cards),
+  //       card: nextProps.cards[0]
+  //     });
+  //   }
+  // }
 
   _resetPan() {
     Animated.spring(this.state.pan, {
@@ -385,8 +390,10 @@ export default class SwipeCards extends Component {
     }
 
     //Get the next stack of cards to render.
-    let cards = this.state.cards.slice(currentIndex[this.guid], currentIndex[this.guid] + this.props.stackDepth).reverse();
-
+    // let cards = this.state.cards.slice(currentIndex[this.guid], currentIndex[this.guid] + this.props.stackDepth).reverse();
+    
+    let cards = this.state.cards.slice(0, this.props.stackDepth).reverse();
+    console.log('renderStack', this.state.card);
     return cards.map((card, i) => {
 
       let offsetX = this.props.stackOffsetX * cards.length - i * this.props.stackOffsetX;
@@ -395,12 +402,15 @@ export default class SwipeCards extends Component {
       let offsetY = this.props.stackOffsetY * cards.length - i * this.props.stackOffsetY;
       let lastOffsetY = offsetY + this.props.stackOffsetY;
 
-      let opacity = 0.25 + (0.75 / cards.length) * (i + 1);
-      let lastOpacity = 0.25 + (0.75 / cards.length) * i;
+      // let opacity = 0.25 + (0.75 / cards.length) * (i + 1);
+      // let lastOpacity = 0.25 + (0.75 / cards.length) * i;
 
-      let scale = 0.85 + (0.15 / cards.length) * (i + 1);
-      let lastScale = 0.85 + (0.15 / cards.length) * i;
-
+      let opacity = 1;
+      let lastOpacity = 1;
+      // let scale = 0.85 + (0.15 / cards.length) * (i + 1);
+      // let lastScale = 0.85 + (0.15 / cards.length) * i;
+      let scale = 1;
+      let lastScale = 1;
       let style = {
         position: 'absolute',
         top: this.state.enter.interpolate({ inputRange: [0, 1], outputRange: [lastOffsetY, offsetY] }),
