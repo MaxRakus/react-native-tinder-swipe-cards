@@ -139,15 +139,16 @@ export default class SwipeCards extends Component {
 
   constructor(props) {
     super(props);
-
-    //Use a persistent variable to track currentIndex instead of a local one.
-    this.guid = this.props.guid || guid++;
-    if (!currentIndex[this.guid]) currentIndex[this.guid] = 0;
+    const initArrayLength = props.cards.length;
+    const tempArray = props.cards.slice(props.currentIndex, props.cards.length);
+    props.cards.unshift(...tempArray);
+    this.realIndex = props.currentIndex;
+    this.currentIndex = 0;
     this.state = {
       pan: new Animated.ValueXY(0),
       enter: new Animated.Value(0.5),
-      cards: [].concat(this.props.cards),
-      card: this.props.cards[currentIndex[this.guid]],
+      cards: props.cards.slice(0, initArrayLength),
+      card: props.cards[this.currentIndex],
     };
 
     this.lastX = 0;
@@ -218,7 +219,7 @@ export default class SwipeCards extends Component {
             return;
           };
 
-          this.props.cardRemoved(currentIndex[this.guid]);
+          this.props.cardRemoved(this.realIndex);
 
           if (this.props.smoothTransition) {
             this._advanceState();
@@ -253,7 +254,7 @@ export default class SwipeCards extends Component {
       this.cardAnimation = null;
     }
       );
-    this.props.cardRemoved(currentIndex[this.guid]);
+    this.props.cardRemoved(this.currentIndex);
   }
 
   _forceUpSwipe() {
@@ -266,7 +267,7 @@ export default class SwipeCards extends Component {
       this.cardAnimation = null;
     }
       );
-    this.props.cardRemoved(currentIndex[this.guid]);
+    this.props.cardRemoved(this.currentIndex);
   }
 
   _forceRightSwipe() {
@@ -279,17 +280,21 @@ export default class SwipeCards extends Component {
       this.cardAnimation = null;
     }
       );
-    this.props.cardRemoved(currentIndex[this.guid]);
+    this.props.cardRemoved(this.currentIndex);
   }
 
   _goToNextCard() {
-    currentIndex[this.guid]++;
-
+    this.currentIndex++;
+    this.realIndex++;
     // Checks to see if last card.
     // If props.loop=true, will start again from the first card.
-    if (currentIndex[this.guid] === this.state.cards.length && this.props.loop) {
+    if (this.realIndex === this.state.cards.length && this.props.loop) {
       this.props.onLoop();
-      currentIndex[this.guid] = 0;
+      this.realIndex = 0;
+    }
+    if (this.currentIndex === this.state.cards.length && this.props.loop) {
+      this.props.onLoop();
+      this.currentIndex = 0;
     }
    
     const tempCards = this.state.cards;
@@ -306,14 +311,17 @@ export default class SwipeCards extends Component {
     this.state.enter.setValue(0);
     this._animateEntrance();
 
-    currentIndex[this.guid]--;
-
-    if (currentIndex[this.guid] < 0) {
-      currentIndex[this.guid] = 0;
+    this.currentIndex--;
+    this.realIndex--;
+    if (this.realIndex < 0) {
+      this.realIndex = 0;
+    }
+    if (this.currentIndex < 0) {
+      this.currentIndex = 0;
     }
 
     this.setState({
-      card: this.state.cards[currentIndex[this.guid]]
+      card: this.state.cards[this.currentIndex],
     });
   }
 
@@ -367,7 +375,7 @@ export default class SwipeCards extends Component {
    * Returns current card object
    */
   getCurrentCard() {
-      return this.state.cards[currentIndex[this.guid]];
+      return this.state.cards[this.currentIndex];
   }
 
   renderNoMoreCards() {
@@ -386,9 +394,6 @@ export default class SwipeCards extends Component {
       return this.renderNoMoreCards();
     }
 
-    //Get the next stack of cards to render.
-    // let cards = this.state.cards.slice(currentIndex[this.guid], currentIndex[this.guid] + this.props.stackDepth).reverse();
-    
     let cards = this.state.cards.slice(0, this.props.stackDepth).reverse();
     return cards.map((card, i) => {
 
@@ -398,13 +403,9 @@ export default class SwipeCards extends Component {
       let offsetY = this.props.stackOffsetY * cards.length - i * this.props.stackOffsetY;
       let lastOffsetY = offsetY + this.props.stackOffsetY;
 
-      // let opacity = 0.25 + (0.75 / cards.length) * (i + 1);
-      // let lastOpacity = 0.25 + (0.75 / cards.length) * i;
-
       let opacity = 1;
       let lastOpacity = 1;
-      // let scale = 0.85 + (0.15 / cards.length) * (i + 1);
-      // let lastScale = 0.85 + (0.15 / cards.length) * i;
+
       let scale = 1;
       let lastScale = 1;
       let style = {
